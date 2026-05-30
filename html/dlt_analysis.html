@@ -1,0 +1,719 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>大乐透近30期数据分析</title>
+<script src="https://cdn.jsdelivr.net/npm/echarts@5.5.0/dist/echarts.min.js"></script>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body {
+  font-family: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif;
+  background: #0d1117;
+  color: #e6edf3;
+  min-height: 100vh;
+}
+.header {
+  text-align: center;
+  padding: 32px 20px 20px;
+  background: linear-gradient(135deg, #1a1f35 0%, #0d1117 100%);
+  border-bottom: 1px solid #30363d;
+}
+.header h1 {
+  font-size: 28px;
+  background: linear-gradient(90deg, #ff6b6b, #ffd93d, #6bcb77, #4d96ff);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  margin-bottom: 6px;
+}
+.header p { color: #8b949e; font-size: 14px; }
+.latest-draw {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  margin-top: 16px;
+  padding: 14px 28px;
+  background: rgba(255,255,255,0.04);
+  border-radius: 12px;
+}
+.latest-draw .tag {
+  font-size: 12px;
+  color: #8b949e;
+  background: #21262d;
+  padding: 4px 10px;
+  border-radius: 6px;
+  white-space: nowrap;
+}
+.latest-draw .nums { display: flex; gap: 8px; align-items: center; }
+.latest-draw .ball {
+  width: 38px; height: 38px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 16px; font-weight: 700; color: #fff;
+}
+.latest-draw .ball.front {
+  background: linear-gradient(135deg, #ff6b6b, #ee5a24);
+  box-shadow: 0 2px 8px #ff6b6b44;
+}
+.latest-draw .ball.back {
+  background: linear-gradient(135deg, #4d96ff, #0984e3);
+  box-shadow: 0 2px 8px #4d96ff44;
+}
+.latest-draw .plus { color: #8b949e; font-size: 18px; font-weight: 300; margin: 0 4px; }
+.grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  max-width: 1600px;
+  margin: 20px auto;
+  padding: 0 20px;
+}
+.card {
+  background: #161b22;
+  border: 1px solid #30363d;
+  border-radius: 12px;
+  padding: 16px;
+  transition: border-color 0.2s;
+}
+.card:hover { border-color: #58a6ff; }
+.card h3 {
+  font-size: 15px; color: #c9d1d9; margin-bottom: 12px;
+  padding-left: 8px; border-left: 3px solid #58a6ff;
+}
+.chart { width: 100%; height: 380px; }
+.card.full { grid-column: 1 / -1; }
+.card.full .chart { height: 420px; }
+.stats-bar {
+  display: flex; gap: 16px;
+  max-width: 1600px; margin: 0 auto 16px; padding: 0 20px;
+}
+.stat-item {
+  flex: 1; background: #161b22; border: 1px solid #30363d;
+  border-radius: 10px; padding: 16px 20px; text-align: center;
+}
+.stat-item .label { font-size: 12px; color: #8b949e; margin-bottom: 4px; }
+.stat-item .value { font-size: 22px; font-weight: 700; }
+.stat-item .value.red { color: #ff6b6b; }
+.stat-item .value.blue { color: #4d96ff; }
+.stat-item .value.gold { color: #ffd93d; }
+.stat-item .value.green { color: #6bcb77; }
+.loading-mask {
+  position: fixed; inset: 0; background: #0d1117; z-index: 999;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 18px; color: #58a6ff;
+}
+.loading-mask.hidden { display: none; }
+@keyframes spin { to { transform: rotate(360deg); } }
+.spinner {
+  width: 32px; height: 32px; border: 3px solid #30363d;
+  border-top-color: #58a6ff; border-radius: 50%;
+  animation: spin 0.8s linear infinite; margin-right: 12px;
+}
+.refresh-btn {
+  background: #21262d; color: #58a6ff; border: 1px solid #30363d;
+  border-radius: 8px; padding: 8px 20px; font-size: 14px; cursor: pointer;
+  transition: all 0.2s; margin-left: 12px;
+}
+.refresh-btn:hover { background: #30363d; border-color: #58a6ff; }
+.refresh-btn:active { transform: scale(0.96); }
+.refresh-btn.spinning { pointer-events: none; opacity: 0.6; }
+.refresh-btn.spinning .btn-icon { display: inline-block; animation: spin 0.8s linear infinite; }
+.toolbar {
+  display: flex; align-items: center; justify-content: center;
+  gap: 12px; margin-top: 10px; flex-wrap: wrap;
+}
+.period-select {
+  background: #21262d; color: #c9d1d9; border: 1px solid #30363d;
+  border-radius: 8px; padding: 8px 14px; font-size: 14px; cursor: pointer;
+}
+.period-select:hover { border-color: #58a6ff; }
+.period-select option { background: #161b22; color: #c9d1d9; }
+@media (max-width: 900px) {
+  .grid { grid-template-columns: 1fr; }
+  .stats-bar { flex-wrap: wrap; }
+  .stat-item { min-width: 45%; }
+}
+</style>
+</head>
+<body>
+
+<div class="loading-mask" id="loadingMask">
+  <div class="spinner"></div>加载数据中...
+</div>
+
+<div class="header">
+  <h1>🎱 大乐透数据分析</h1>
+  <p id="dateRange"></p>
+  <div class="toolbar">
+    <label style="color:#8b949e;font-size:14px;">查看期数</label>
+    <select class="period-select" id="periodSelect" onchange="handlePeriodChange()">
+      <option value="5">最近 5 期</option>
+      <option value="10">最近 10 期</option>
+      <option value="20">最近 20 期</option>
+      <option value="30" selected>最近 30 期</option>
+      <option value="50">最近 50 期</option>
+      <option value="100">最近 100 期</option>
+    </select>
+    <button class="refresh-btn" id="refreshBtn" onclick="handleRefresh()" title="重新加载数据">
+      <span class="btn-icon">🔄</span> 刷新数据
+    </button>
+    <span id="updateTime" style="font-size:12px;color:#8b949e;"></span>
+  </div>
+  <div style="margin-top:14px;">
+    <div class="latest-draw" id="latestDraw"></div>
+  </div>
+</div>
+
+<div class="stats-bar" id="statsBar"></div>
+
+<div class="grid">
+  <div class="card full">
+    <h3>📊 号码走势图（前区）</h3>
+    <div class="chart" id="trendFront"></div>
+  </div>
+  <div class="card full">
+    <h3>📊 号码走势图（后区）</h3>
+    <div class="chart" id="trendBack"></div>
+  </div>
+  <div class="card">
+    <h3>🔢 前区号码频率（出现次数）</h3>
+    <div class="chart" id="freqFront"></div>
+  </div>
+  <div class="card">
+    <h3>🔢 后区号码频率（出现次数）</h3>
+    <div class="chart" id="freqBack"></div>
+  </div>
+  <div class="card">
+    <h3>⚖️ 奇偶比分布</h3>
+    <div class="chart" id="oddEven"></div>
+  </div>
+  <div class="card">
+    <h3>📏 大小比分布</h3>
+    <div class="chart" id="bigSmall"></div>
+  </div>
+  <div class="card">
+    <h3>➕ 前区和值走势</h3>
+    <div class="chart" id="sumTrend"></div>
+  </div>
+  <div class="card">
+    <h3>📈 销售额 & 奖池余额趋势</h3>
+    <div class="chart" id="salesTrend"></div>
+  </div>
+  <div class="card">
+    <h3>🔥 号码遗漏分析（前区）</h3>
+    <div class="chart" id="missing"></div>
+  </div>
+  <div class="card">
+    <h3>🔗 连号统计</h3>
+    <div class="chart" id="consecutive"></div>
+  </div>
+  <div class="card">
+    <h3>🎯 重号统计（与上期重复）</h3>
+    <div class="chart" id="repeat"></div>
+  </div>
+  <div class="card">
+    <h3>📊 跨度分析</h3>
+    <div class="chart" id="span"></div>
+  </div>
+  <div class="card">
+    <h3>🗺️ 三区比分布</h3>
+    <div class="chart" id="zoneRatio"></div>
+  </div>
+  <div class="card">
+    <h3>🌡️ 冷热号分析（前区）</h3>
+    <div class="chart" id="hotCold"></div>
+  </div>
+  <div class="card">
+    <h3>🔟 尾数分布</h3>
+    <div class="chart" id="tailNum"></div>
+  </div>
+  <div class="card full">
+    <h3>📐 AC值走势</h3>
+    <div class="chart" id="acValue"></div>
+  </div>
+</div>
+
+<script>
+const DATA_URL = '/data/dlt_recent_30.json';
+
+function getDataUrl() {
+  const count = document.getElementById('periodSelect').value;
+  return `/data/dlt_recent_${count}.json`;
+}
+
+function parseNum(s) { return parseInt(s.replace(/,/g, ''), 10); }
+function pad2(n) { return String(n).padStart(2, '0'); }
+
+const darkTheme = {
+  textStyle: { color: '#8b949e' },
+  title: { textStyle: { color: '#c9d1d9' } },
+};
+
+function makeChart(id) {
+  return echarts.init(document.getElementById(id));
+}
+
+function render(DATA) {
+  const periods = DATA.map(d => d.期号);
+  const frontNums = DATA.map(d => d.前区.split(',').map(Number));
+  const backNums = DATA.map(d => d.后区.split(',').map(Number));
+
+  document.getElementById('dateRange').textContent =
+    `数据区间：第${DATA[0].期号}期 (${DATA[0].开奖日期}) — 第${DATA[DATA.length-1].期号}期 (${DATA[DATA.length-1].开奖日期})`;
+
+  const latest = DATA[DATA.length - 1];
+  document.getElementById('latestDraw').innerHTML =
+    `<span class="tag">第${latest.期号}期 · ${latest.开奖日期}</span>` +
+    `<div class="nums">` +
+      latest.前区.split(',').map(n => `<span class="ball front">${n}</span>`).join('') +
+      `<span class="plus">+</span>` +
+      latest.后区.split(',').map(n => `<span class="ball back">${n}</span>`).join('') +
+    `</div>`;
+
+  const frontFreq = {}; const backFreq = {};
+  for (let i = 1; i <= 35; i++) frontFreq[i] = 0;
+  for (let i = 1; i <= 12; i++) backFreq[i] = 0;
+  frontNums.flat().forEach(n => frontFreq[n]++);
+  backNums.flat().forEach(n => backFreq[n]++);
+
+  const hotFront = Object.entries(frontFreq).sort((a,b) => b[1]-a[1]).slice(0,3).map(e => pad2(e[0]));
+  const hotBack = Object.entries(backFreq).sort((a,b) => b[1]-a[1]).slice(0,2).map(e => pad2(e[0]));
+  const avgSales = DATA.reduce((s,d) => s + parseNum(d.总销售额), 0) / DATA.length;
+  const avgPool = DATA.reduce((s,d) => s + parseNum(d.奖池余额), 0) / DATA.length;
+
+  document.getElementById('statsBar').innerHTML = `
+    <div class="stat-item"><div class="label">🔥 前区热门号</div><div class="value red">${hotFront.join(' ')}</div></div>
+    <div class="stat-item"><div class="label">🔥 后区热门号</div><div class="value blue">${hotBack.join(' ')}</div></div>
+    <div class="stat-item"><div class="label">💰 平均销售额</div><div class="value gold">${(avgSales/1e8).toFixed(2)}亿</div></div>
+    <div class="stat-item"><div class="label">🏦 平均奖池</div><div class="value green">${(avgPool/1e8).toFixed(2)}亿</div></div>
+  `;
+
+  // 1. 前区走势
+  ;(function() {
+    const chart = makeChart('trendFront');
+    const series = [];
+    for (let i = 1; i <= 35; i++) {
+      series.push({
+        name: pad2(i), type: 'scatter',
+        symbolSize: function(val) { return val[1] === i ? 14 : 0; },
+        data: periods.map((p, idx) => [idx, frontNums[idx].includes(i) ? i : null]),
+        itemStyle: { color: '#ff6b6b' },
+        label: {
+          show: true,
+          formatter: function(p) { return p.value[1] ? pad2(p.value[1]) : ''; },
+          fontSize: 10, color: '#fff',
+        }
+      });
+    }
+    series.unshift({ type: 'line', data: periods.map((_, idx) => [idx, null]), lineStyle: { opacity: 0 }, symbolSize: 0 });
+    chart.setOption({
+      ...darkTheme,
+      tooltip: { trigger: 'item', formatter: p => p.value[1] ? `第${periods[p.value[0]]}期<br/>号码: <b>${pad2(p.value[1])}</b>` : '' },
+      grid: { left: 40, right: 20, top: 20, bottom: 30 },
+      xAxis: { type: 'category', data: periods, axisLabel: { color: '#8b949e', fontSize: 10, rotate: 45 }, splitLine: { show: true, lineStyle: { color: '#21262d' } } },
+      yAxis: { type: 'value', min: 0, max: 36, axisLabel: { color: '#8b949e', fontSize: 10, formatter: v => pad2(v) }, splitLine: { lineStyle: { color: '#21262d' } } },
+      series: series, animation: false,
+    });
+  })();
+
+  // 2. 后区走势
+  ;(function() {
+    const chart = makeChart('trendBack');
+    const series = [];
+    for (let i = 1; i <= 12; i++) {
+      series.push({
+        name: pad2(i), type: 'scatter',
+        symbolSize: function(val) { return val[1] === i ? 16 : 0; },
+        data: periods.map((p, idx) => [idx, backNums[idx].includes(i) ? i : null]),
+        itemStyle: { color: '#4d96ff' },
+        label: {
+          show: true,
+          formatter: function(p) { return p.value[1] ? pad2(p.value[1]) : ''; },
+          fontSize: 11, color: '#fff',
+        }
+      });
+    }
+    chart.setOption({
+      ...darkTheme,
+      tooltip: { trigger: 'item', formatter: p => p.value[1] ? `第${periods[p.value[0]]}期<br/>号码: <b>${pad2(p.value[1])}</b>` : '' },
+      grid: { left: 40, right: 20, top: 20, bottom: 30 },
+      xAxis: { type: 'category', data: periods, axisLabel: { color: '#8b949e', fontSize: 10, rotate: 45 }, splitLine: { show: true, lineStyle: { color: '#21262d' } } },
+      yAxis: { type: 'value', min: 0, max: 13, axisLabel: { color: '#8b949e', fontSize: 10, formatter: v => pad2(v) }, splitLine: { lineStyle: { color: '#21262d' } } },
+      series: series, animation: false,
+    });
+  })();
+
+  // 3. 前区频率
+  ;(function() {
+    const chart = makeChart('freqFront');
+    const xData = [], yData = [];
+    for (let i = 1; i <= 35; i++) { xData.push(pad2(i)); yData.push(frontFreq[i] || 0); }
+    const maxVal = Math.max(...yData);
+    chart.setOption({
+      ...darkTheme, tooltip: { trigger: 'axis' },
+      grid: { left: 40, right: 20, top: 20, bottom: 30 },
+      xAxis: { type: 'category', data: xData, axisLabel: { color: '#8b949e', fontSize: 10, rotate: 45 } },
+      yAxis: { type: 'value', axisLabel: { color: '#8b949e' }, splitLine: { lineStyle: { color: '#21262d' } } },
+      series: [{
+        type: 'bar', barWidth: '60%',
+        data: yData.map(v => ({
+          value: v,
+          itemStyle: { color: v === maxVal ? '#ff6b6b' : v >= maxVal - 1 ? '#ffd93d' : new echarts.graphic.LinearGradient(0,0,0,1,[{offset:0,color:'#ff6b6b88'},{offset:1,color:'#ff6b6b22'}]) }
+        })),
+        label: { show: true, position: 'top', color: '#c9d1d9', fontSize: 10 },
+      }]
+    });
+  })();
+
+  // 4. 后区频率
+  ;(function() {
+    const chart = makeChart('freqBack');
+    const xData = [], yData = [];
+    for (let i = 1; i <= 12; i++) { xData.push(pad2(i)); yData.push(backFreq[i] || 0); }
+    const maxVal = Math.max(...yData);
+    chart.setOption({
+      ...darkTheme, tooltip: { trigger: 'axis' },
+      grid: { left: 40, right: 20, top: 20, bottom: 30 },
+      xAxis: { type: 'category', data: xData, axisLabel: { color: '#8b949e', fontSize: 10 } },
+      yAxis: { type: 'value', axisLabel: { color: '#8b949e' }, splitLine: { lineStyle: { color: '#21262d' } } },
+      series: [{
+        type: 'bar', barWidth: '50%',
+        data: yData.map(v => ({
+          value: v,
+          itemStyle: { color: v === maxVal ? '#4d96ff' : v >= maxVal - 1 ? '#ffd93d' : new echarts.graphic.LinearGradient(0,0,0,1,[{offset:0,color:'#4d96ff88'},{offset:1,color:'#4d96ff22'}]) }
+        })),
+        label: { show: true, position: 'top', color: '#c9d1d9', fontSize: 11 },
+      }]
+    });
+  })();
+
+  // 5. 奇偶比
+  ;(function() {
+    const chart = makeChart('oddEven');
+    const ratioCount = {};
+    frontNums.forEach(nums => {
+      const odd = nums.filter(n => n % 2 === 1).length;
+      const r = `${odd}:${5-odd}`;
+      ratioCount[r] = (ratioCount[r] || 0) + 1;
+    });
+    const data = Object.entries(ratioCount).sort((a,b) => parseInt(a[0]) - parseInt(b[0])).map(([k,v]) => ({ name: k, value: v }));
+    chart.setOption({
+      ...darkTheme, tooltip: { trigger: 'item', formatter: '{b}: {c}次 ({d}%)' },
+      series: [{
+        type: 'pie', radius: ['35%','65%'], center: ['50%','50%'], data,
+        label: { color: '#c9d1d9', fontSize: 12 },
+        itemStyle: { borderColor: '#161b22', borderWidth: 2 },
+        color: ['#ff6b6b','#ffd93d','#6bcb77','#4d96ff','#c084fc','#fb923c'],
+      }]
+    });
+  })();
+
+  // 6. 大小比
+  ;(function() {
+    const chart = makeChart('bigSmall');
+    const ratioCount = {};
+    frontNums.forEach(nums => {
+      const big = nums.filter(n => n > 17).length;
+      const r = `${big}:${5-big}`;
+      ratioCount[r] = (ratioCount[r] || 0) + 1;
+    });
+    const data = Object.entries(ratioCount).sort((a,b) => parseInt(a[0]) - parseInt(b[0])).map(([k,v]) => ({ name: k, value: v }));
+    chart.setOption({
+      ...darkTheme, tooltip: { trigger: 'item', formatter: '{b}: {c}次 ({d}%)' },
+      series: [{
+        type: 'pie', radius: ['35%','65%'], center: ['50%','50%'], data,
+        label: { color: '#c9d1d9', fontSize: 12 },
+        itemStyle: { borderColor: '#161b22', borderWidth: 2 },
+        color: ['#6bcb77','#4d96ff','#ff6b6b','#ffd93d','#c084fc','#fb923c'],
+      }]
+    });
+  })();
+
+  // 7. 和值走势
+  ;(function() {
+    const chart = makeChart('sumTrend');
+    const sums = frontNums.map(nums => nums.reduce((a,b) => a+b, 0));
+    const avg = (sums.reduce((a,b)=>a+b,0) / sums.length).toFixed(1);
+    chart.setOption({
+      ...darkTheme, tooltip: { trigger: 'axis' },
+      grid: { left: 50, right: 20, top: 20, bottom: 30 },
+      xAxis: { type: 'category', data: periods, axisLabel: { color: '#8b949e', fontSize: 10, rotate: 45 } },
+      yAxis: { type: 'value', axisLabel: { color: '#8b949e' }, splitLine: { lineStyle: { color: '#21262d' } } },
+      series: [{
+        type: 'line', data: sums, smooth: true,
+        lineStyle: { color: '#ffd93d', width: 2 }, itemStyle: { color: '#ffd93d' },
+        areaStyle: { color: new echarts.graphic.LinearGradient(0,0,0,1,[{offset:0,color:'#ffd93d33'},{offset:1,color:'#ffd93d05'}]) },
+        markLine: { silent: true, data: [{ yAxis: avg }], lineStyle: { color: '#ff6b6b', type: 'dashed' }, label: { formatter: '均值 '+avg, color: '#ff6b6b' } },
+        label: { show: true, color: '#ffd93d', fontSize: 10 },
+      }]
+    });
+  })();
+
+  // 8. 销售额 & 奖池
+  ;(function() {
+    const chart = makeChart('salesTrend');
+    const sales = DATA.map(d => parseNum(d.总销售额) / 1e8);
+    const pool = DATA.map(d => parseNum(d.奖池余额) / 1e8);
+    chart.setOption({
+      ...darkTheme,
+      tooltip: { trigger: 'axis', valueFormatter: v => v?.toFixed(2) + '亿' },
+      legend: { data: ['销售额','奖池余额'], textStyle: { color: '#8b949e' }, top: 0 },
+      grid: { left: 55, right: 55, top: 40, bottom: 30 },
+      xAxis: { type: 'category', data: periods, axisLabel: { color: '#8b949e', fontSize: 10, rotate: 45 } },
+      yAxis: [
+        { type: 'value', name: '销售额(亿)', axisLabel: { color: '#ffd93d' }, splitLine: { lineStyle: { color: '#21262d' } }, nameTextStyle: { color: '#ffd93d' } },
+        { type: 'value', name: '奖池(亿)', axisLabel: { color: '#6bcb77' }, splitLine: { show: false }, nameTextStyle: { color: '#6bcb77' } },
+      ],
+      series: [
+        { name: '销售额', type: 'bar', data: sales, barWidth: '40%', itemStyle: { color: new echarts.graphic.LinearGradient(0,0,0,1,[{offset:0,color:'#ffd93d'},{offset:1,color:'#ffd93d44'}]) } },
+        { name: '奖池余额', type: 'line', yAxisIndex: 1, data: pool, smooth: true, lineStyle: { color: '#6bcb77', width: 2 }, itemStyle: { color: '#6bcb77' }, areaStyle: { color: new echarts.graphic.LinearGradient(0,0,0,1,[{offset:0,color:'#6bcb7722'},{offset:1,color:'#6bcb7705'}]) } },
+      ]
+    });
+  })();
+
+  // 9. 遗漏分析
+  ;(function() {
+    const chart = makeChart('missing');
+    const lastAppear = {};
+    for (let i = 1; i <= 35; i++) lastAppear[i] = -1;
+    frontNums.forEach((nums, idx) => nums.forEach(n => { lastAppear[n] = idx; }));
+    const xData = [], yData = [];
+    for (let i = 1; i <= 35; i++) {
+      xData.push(pad2(i));
+      yData.push(lastAppear[i] === -1 ? DATA.length : DATA.length - 1 - lastAppear[i]);
+    }
+    chart.setOption({
+      ...darkTheme,
+      tooltip: { trigger: 'axis', formatter: p => `号码 ${p[0].name}: 已遗漏 <b>${p[0].value}</b> 期` },
+      grid: { left: 40, right: 20, top: 20, bottom: 30 },
+      xAxis: { type: 'category', data: xData, axisLabel: { color: '#8b949e', fontSize: 10, rotate: 45 } },
+      yAxis: { type: 'value', name: '遗漏期数', axisLabel: { color: '#8b949e' }, splitLine: { lineStyle: { color: '#21262d' } }, nameTextStyle: { color: '#8b949e' } },
+      series: [{
+        type: 'bar', barWidth: '60%',
+        data: yData.map(v => ({ value: v, itemStyle: { color: v === 0 ? '#6bcb77' : v >= 5 ? '#ff6b6b' : v >= 3 ? '#ffd93d' : '#4d96ff' } })),
+        label: { show: true, position: 'top', color: '#c9d1d9', fontSize: 10 },
+      }]
+    });
+  })();
+
+  // 10. 连号统计
+  ;(function() {
+    const chart = makeChart('consecutive');
+    const dist = {};
+    frontNums.forEach(nums => {
+      let c = 0;
+      for (let i = 0; i < nums.length - 1; i++) if (nums[i+1] - nums[i] === 1) c++;
+      dist[c] = (dist[c] || 0) + 1;
+    });
+    const keys = Object.keys(dist).sort();
+    chart.setOption({
+      ...darkTheme, tooltip: { trigger: 'axis' },
+      grid: { left: 40, right: 20, top: 20, bottom: 30 },
+      xAxis: { type: 'category', data: keys.map(k => k + '组'), axisLabel: { color: '#8b949e' } },
+      yAxis: { type: 'value', axisLabel: { color: '#8b949e' }, splitLine: { lineStyle: { color: '#21262d' } } },
+      series: [{
+        type: 'bar', data: keys.map(k => dist[k]), barWidth: '50%',
+        itemStyle: { color: new echarts.graphic.LinearGradient(0,0,0,1,[{offset:0,color:'#c084fc'},{offset:1,color:'#c084fc44'}]) },
+        label: { show: true, position: 'top', color: '#c9d1d9', formatter: '{c}期' },
+      }]
+    });
+  })();
+
+  // 11. 重号统计
+  ;(function() {
+    const chart = makeChart('repeat');
+    const dist = {};
+    for (let i = 1; i < frontNums.length; i++) {
+      const prev = new Set(frontNums[i-1]);
+      const c = frontNums[i].filter(n => prev.has(n)).length;
+      dist[c] = (dist[c] || 0) + 1;
+    }
+    const keys = Object.keys(dist).sort();
+    chart.setOption({
+      ...darkTheme, tooltip: { trigger: 'axis' },
+      grid: { left: 40, right: 20, top: 20, bottom: 30 },
+      xAxis: { type: 'category', data: keys.map(k => k + '个'), axisLabel: { color: '#8b949e' } },
+      yAxis: { type: 'value', axisLabel: { color: '#8b949e' }, splitLine: { lineStyle: { color: '#21262d' } } },
+      series: [{
+        type: 'bar', data: keys.map(k => dist[k]), barWidth: '50%',
+        itemStyle: { color: new echarts.graphic.LinearGradient(0,0,0,1,[{offset:0,color:'#fb923c'},{offset:1,color:'#fb923c44'}]) },
+        label: { show: true, position: 'top', color: '#c9d1d9', formatter: '{c}期' },
+      }]
+    });
+  })();
+
+  // 12. 跨度分析
+  ;(function() {
+    const chart = makeChart('span');
+    const spans = frontNums.map(nums => nums[nums.length-1] - nums[0]);
+    chart.setOption({
+      ...darkTheme, tooltip: { trigger: 'axis' },
+      grid: { left: 40, right: 20, top: 20, bottom: 30 },
+      xAxis: { type: 'category', data: periods, axisLabel: { color: '#8b949e', fontSize: 10, rotate: 45 } },
+      yAxis: { type: 'value', axisLabel: { color: '#8b949e' }, splitLine: { lineStyle: { color: '#21262d' } } },
+      series: [{
+        type: 'line', data: spans, smooth: true,
+        lineStyle: { color: '#22d3ee', width: 2 }, itemStyle: { color: '#22d3ee' },
+        areaStyle: { color: new echarts.graphic.LinearGradient(0,0,0,1,[{offset:0,color:'#22d3ee33'},{offset:1,color:'#22d3ee05'}]) },
+        label: { show: true, color: '#22d3ee', fontSize: 10 },
+        markLine: { silent: true, data: [{ type: 'average' }], lineStyle: { color: '#ff6b6b', type: 'dashed' }, label: { color: '#ff6b6b' } },
+      }]
+    });
+  })();
+
+  // 13. 三区比分布 (1-12 / 13-23 / 24-35)
+  ;(function() {
+    const chart = makeChart('zoneRatio');
+    const ratioCount = {};
+    frontNums.forEach(nums => {
+      const z1 = nums.filter(n => n <= 12).length;
+      const z2 = nums.filter(n => n >= 13 && n <= 23).length;
+      const z3 = nums.filter(n => n >= 24).length;
+      const r = `${z1}:${z2}:${z3}`;
+      ratioCount[r] = (ratioCount[r] || 0) + 1;
+    });
+    const data = Object.entries(ratioCount)
+      .sort((a,b) => b[1] - a[1])
+      .map(([k,v]) => ({ name: k, value: v }));
+    chart.setOption({
+      ...darkTheme, tooltip: { trigger: 'item', formatter: '{b}: {c}次 ({d}%)' },
+      series: [{
+        type: 'pie', radius: ['35%','65%'], center: ['50%','50%'], data,
+        label: { color: '#c9d1d9', fontSize: 11 },
+        itemStyle: { borderColor: '#161b22', borderWidth: 2 },
+        color: ['#ff6b6b','#ffd93d','#6bcb77','#4d96ff','#c084fc','#fb923c','#22d3ee','#f472b6'],
+      }]
+    });
+  })();
+
+  // 14. 冷热号分析
+  ;(function() {
+    const chart = makeChart('hotCold');
+    const recentN = Math.min(5, frontNums.length);
+    const recentNums = frontNums.slice(-recentN);
+    const recentFreq = {};
+    for (let i = 1; i <= 35; i++) recentFreq[i] = 0;
+    recentNums.flat().forEach(n => recentFreq[n]++);
+    const xData = [], yData = [], colors = [];
+    for (let i = 1; i <= 35; i++) {
+      xData.push(pad2(i));
+      yData.push(recentFreq[i]);
+      colors.push(recentFreq[i] >= 3 ? '#ff6b6b' : recentFreq[i] >= 2 ? '#ffd93d' : recentFreq[i] >= 1 ? '#4d96ff' : '#30363d');
+    }
+    chart.setOption({
+      ...darkTheme,
+      tooltip: { trigger: 'axis', formatter: p => `号码 ${p[0].name}: 近${recentN}期出现 <b>${p[0].value}</b> 次` },
+      grid: { left: 40, right: 20, top: 30, bottom: 30 },
+      legend: { data: ['热≥3','温2','暖1','冷0'], top: 0, textStyle: { color: '#8b949e', fontSize: 10 },
+        itemWidth: 10, itemHeight: 10, itemGap: 8 },
+      xAxis: { type: 'category', data: xData, axisLabel: { color: '#8b949e', fontSize: 10, rotate: 45 } },
+      yAxis: { type: 'value', name: `近${recentN}期`, axisLabel: { color: '#8b949e' }, splitLine: { lineStyle: { color: '#21262d' } }, nameTextStyle: { color: '#8b949e' } },
+      series: [{
+        type: 'bar', barWidth: '60%',
+        data: yData.map((v, i) => ({ value: v, itemStyle: { color: colors[i] } })),
+        label: { show: true, position: 'top', color: '#c9d1d9', fontSize: 9, formatter: p => p.value || '' },
+      }]
+    });
+  })();
+
+  // 15. 尾数分布
+  ;(function() {
+    const chart = makeChart('tailNum');
+    const tailFreq = {};
+    for (let i = 0; i <= 9; i++) tailFreq[i] = 0;
+    frontNums.flat().forEach(n => tailFreq[n % 10]++);
+    const xData = Object.keys(tailFreq).map(k => '尾' + k);
+    const yData = Object.values(tailFreq);
+    chart.setOption({
+      ...darkTheme, tooltip: { trigger: 'axis' },
+      grid: { left: 40, right: 20, top: 20, bottom: 30 },
+      xAxis: { type: 'category', data: xData, axisLabel: { color: '#8b949e' } },
+      yAxis: { type: 'value', axisLabel: { color: '#8b949e' }, splitLine: { lineStyle: { color: '#21262d' } } },
+      series: [{
+        type: 'bar', data: yData, barWidth: '50%',
+        itemStyle: { color: new echarts.graphic.LinearGradient(0,0,0,1,[{offset:0,color:'#f472b6'},{offset:1,color:'#f472b644'}]) },
+        label: { show: true, position: 'top', color: '#c9d1d9' },
+      }]
+    });
+  })();
+
+  // 16. AC值走势
+  ;(function() {
+    const chart = makeChart('acValue');
+    const acValues = frontNums.map(nums => {
+      const diffs = new Set();
+      for (let i = 0; i < nums.length; i++)
+        for (let j = i + 1; j < nums.length; j++)
+          diffs.add(Math.abs(nums[i] - nums[j]));
+      return diffs.size - (nums.length - 1);
+    });
+    const avg = (acValues.reduce((a,b)=>a+b,0) / acValues.length).toFixed(1);
+    chart.setOption({
+      ...darkTheme, tooltip: { trigger: 'axis' },
+      grid: { left: 40, right: 20, top: 20, bottom: 30 },
+      xAxis: { type: 'category', data: periods, axisLabel: { color: '#8b949e', fontSize: 10, rotate: 45 } },
+      yAxis: { type: 'value', min: 0, axisLabel: { color: '#8b949e' }, splitLine: { lineStyle: { color: '#21262d' } } },
+      series: [{
+        type: 'line', data: acValues, smooth: true,
+        lineStyle: { color: '#f472b6', width: 2 }, itemStyle: { color: '#f472b6' },
+        areaStyle: { color: new echarts.graphic.LinearGradient(0,0,0,1,[{offset:0,color:'#f472b633'},{offset:1,color:'#f472b605'}]) },
+        markLine: { silent: true, data: [{ yAxis: avg }], lineStyle: { color: '#ff6b6b', type: 'dashed' }, label: { formatter: '均值 '+avg, color: '#ff6b6b' } },
+        label: { show: true, color: '#f472b6', fontSize: 10 },
+      }]
+    });
+  })();
+
+  document.getElementById('loadingMask').classList.add('hidden');
+}
+
+async function loadData(showLoading) {
+  if (showLoading) document.getElementById('loadingMask').classList.remove('hidden');
+  try {
+    const url = getDataUrl() + '?_t=' + Date.now();
+    const res = await fetch(url);
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const data = await res.json();
+    document.querySelectorAll('.chart').forEach(el => {
+      const inst = echarts.getInstanceByDom(el);
+      if (inst) inst.dispose();
+    });
+    render(data);
+    return true;
+  } catch (e) {
+    if (showLoading) {
+      document.getElementById('loadingMask').innerHTML =
+        `<div style="text-align:center"><p style="color:#ff6b6b;font-size:18px;margin-bottom:8px">数据加载失败</p><p style="color:#8b949e">${e.message}</p></div>`;
+    }
+    return false;
+  }
+}
+
+async function handleRefresh() {
+  const btn = document.getElementById('refreshBtn');
+  btn.classList.add('spinning');
+  const ok = await loadData(true);
+  btn.classList.remove('spinning');
+  if (ok) {
+    const now = new Date();
+    const ts = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')} ${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}:${String(now.getSeconds()).padStart(2,'0')}`;
+    document.getElementById('updateTime').textContent = '最后刷新: ' + ts;
+    btn.innerHTML = '<span class="btn-icon">✅</span> 已更新';
+    setTimeout(() => { btn.innerHTML = '<span class="btn-icon">🔄</span> 刷新数据'; }, 2000);
+  }
+}
+
+function handlePeriodChange() {
+  loadData(true);
+}
+
+window.addEventListener('resize', () => {
+  document.querySelectorAll('.chart').forEach(el => {
+    const inst = echarts.getInstanceByDom(el);
+    if (inst) inst.resize();
+  });
+});
+
+loadData(true);
+</script>
+</body>
+</html>

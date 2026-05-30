@@ -1,0 +1,11 @@
+# IDE
+.idea/
+
+# CodeGraph
+.codegraph/
+
+# Playwright MCP
+.playwright-mcp/
+
+# Screenshots
+*.png

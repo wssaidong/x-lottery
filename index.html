@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>彩票数据分析</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body {
+  font-family: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif;
+  background: #0d1117; color: #e6edf3;
+  display: flex; align-items: center; justify-content: center; min-height: 100vh;
+}
+.container { text-align: center; }
+h1 {
+  font-size: 32px; margin-bottom: 40px;
+  background: linear-gradient(90deg, #ff6b6b, #ffd93d, #6bcb77, #4d96ff);
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+}
+.cards { display: flex; gap: 24px; flex-wrap: wrap; justify-content: center; }
+.card {
+  width: 280px; padding: 32px 24px;
+  background: #161b22; border: 1px solid #30363d;
+  border-radius: 16px; text-decoration: none; color: #e6edf3;
+  transition: all 0.25s;
+}
+.card:hover { border-color: #58a6ff; transform: translateY(-4px); box-shadow: 0 8px 24px #0008; }
+.card .icon { font-size: 48px; margin-bottom: 16px; }
+.card h2 { font-size: 22px; margin-bottom: 8px; }
+.card p { color: #8b949e; font-size: 14px; }
+</style>
+</head>
+<body>
+<div class="container">
+  <h1>🎱 彩票数据分析</h1>
+  <div class="cards">
+    <a class="card" href="html/dlt_analysis.html">
+      <div class="icon">🎱</div>
+      <h2>大乐透</h2>
+      <p>前区 35 选 5 + 后区 12 选 2<br/>走势 · 频率 · 遗漏 · 和值</p>
+    </a>
+    <a class="card" href="html/ssq_analysis.html">
+      <div class="icon">🔴</div>
+      <h2>双色球</h2>
+      <p>红球 33 选 6 + 蓝球 16 选 1<br/>走势 · 频率 · 遗漏 · 和值</p>
+    </a>
+  </div>
+</div>
+</body>
+</html>
