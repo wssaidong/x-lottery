@@ -234,12 +234,11 @@ body {
 </div>
 
 <script>
-const DATA_URL = '/data/dlt_recent_30.json';
-
 function getDataUrl() {
   const count = document.getElementById('periodSelect').value;
-  return `/data/dlt_recent_${count}.json`;
+  return `/api/dlt?count=${count}`;
 }
+const FALLBACK_DIR = '/data';
 
 function parseNum(s) { return parseInt(s.replace(/,/g, ''), 10); }
 function pad2(n) { return String(n).padStart(2, '0'); }
@@ -669,7 +668,7 @@ function render(DATA) {
 async function loadData(showLoading) {
   if (showLoading) document.getElementById('loadingMask').classList.remove('hidden');
   try {
-    const url = getDataUrl() + '?_t=' + Date.now();
+    const url = getDataUrl() + '&_t=' + Date.now();
     const res = await fetch(url);
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     const data = await res.json();
@@ -680,11 +679,25 @@ async function loadData(showLoading) {
     render(data);
     return true;
   } catch (e) {
-    if (showLoading) {
-      document.getElementById('loadingMask').innerHTML =
-        `<div style="text-align:center"><p style="color:#ff6b6b;font-size:18px;margin-bottom:8px">数据加载失败</p><p style="color:#8b949e">${e.message}</p></div>`;
+    try {
+      const count = document.getElementById('periodSelect').value;
+      const fallbackUrl = `${FALLBACK_DIR}/dlt_recent_${count}.json?_t=` + Date.now();
+      const res = await fetch(fallbackUrl);
+      if (!res.ok) throw new Error();
+      const data = await res.json();
+      document.querySelectorAll('.chart').forEach(el => {
+        const inst = echarts.getInstanceByDom(el);
+        if (inst) inst.dispose();
+      });
+      render(data);
+      return true;
+    } catch {
+      if (showLoading) {
+        document.getElementById('loadingMask').innerHTML =
+          `<div style="text-align:center"><p style="color:#ff6b6b;font-size:18px;margin-bottom:8px">数据加载失败</p><p style="color:#8b949e">${e.message}</p></div>`;
+      }
+      return false;
     }
-    return false;
   }
 }
 
