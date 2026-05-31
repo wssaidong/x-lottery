@@ -98,6 +98,45 @@ body {
 .refresh-btn:active { transform: scale(0.96); }
 .refresh-btn.spinning { pointer-events: none; opacity: 0.6; }
 .refresh-btn.spinning .btn-icon { display: inline-block; animation: spin 0.8s linear infinite; }
+.rules-section {
+  max-width: 1600px; margin: 16px auto; padding: 0 20px;
+}
+.rules-toggle {
+  width: 100%; background: #161b22; border: 1px solid #30363d;
+  border-radius: 10px; padding: 12px 20px; cursor: pointer;
+  display: flex; align-items: center; justify-content: space-between;
+  color: #c9d1d9; font-size: 14px; transition: all 0.2s;
+}
+.rules-toggle:hover { border-color: #58a6ff; }
+.rules-toggle .arrow { transition: transform 0.3s; font-size: 12px; color: #8b949e; }
+.rules-toggle.open .arrow { transform: rotate(180deg); }
+.rules-table-wrap {
+  max-height: 0; overflow: hidden; transition: max-height 0.4s ease;
+  background: #161b22; border: 1px solid #30363d; border-top: none;
+  border-radius: 0 0 10px 10px;
+}
+.rules-table-wrap.open { max-height: 800px; }
+.rules-table {
+  width: 100%; border-collapse: collapse; font-size: 13px;
+}
+.rules-table th {
+  padding: 10px 12px; text-align: center; color: #8b949e;
+  border-bottom: 1px solid #30363d; font-weight: 600; font-size: 12px;
+}
+.rules-table td {
+  padding: 9px 12px; text-align: center; color: #c9d1d9;
+  border-bottom: 1px solid #21262d;
+}
+.rules-table tr:last-child td { border-bottom: none; }
+.rules-table tr:hover td { background: #1c2333; }
+.ball-sm {
+  display: inline-block; width: 24px; height: 24px; border-radius: 50%;
+  line-height: 24px; text-align: center; font-size: 11px; font-weight: 700; color: #fff; margin: 0 1px;
+}
+.ball-sm.red { background: #ff6b6b; }
+.ball-sm.blue { background: #4d96ff; }
+.prize-float { color: #ffd93d; font-weight: 600; }
+.prize-fixed { color: #6bcb77; }
 .toolbar {
   display: flex; align-items: center; justify-content: center;
   gap: 12px; margin-top: 10px; flex-wrap: wrap;
@@ -145,6 +184,56 @@ body {
 </div>
 
 <div class="stats-bar" id="statsBar"></div>
+
+<div class="rules-section">
+  <div class="rules-toggle" id="rulesToggle" onclick="toggleRules()">
+    <span>📋 双色球中奖规则表 <span style="color:#8b949e;font-size:12px;margin-left:8px;">红球33选6 + 蓝球16选1 · 6个奖级</span></span>
+    <span class="arrow">▼</span>
+  </div>
+  <div class="rules-table-wrap" id="rulesWrap">
+    <table class="rules-table">
+      <thead>
+        <tr>
+          <th>奖级</th>
+          <th>中奖条件</th>
+          <th>奖金</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td style="color:#ffd93d;font-weight:700;">一等奖</td>
+          <td><span class="ball-sm red">✓</span><span class="ball-sm red">✓</span><span class="ball-sm red">✓</span><span class="ball-sm red">✓</span><span class="ball-sm red">✓</span><span class="ball-sm red">✓</span> + <span class="ball-sm blue">✓</span></td>
+          <td class="prize-float">浮动（最高500万）</td>
+        </tr>
+        <tr>
+          <td style="color:#ffd93d;font-weight:700;">二等奖</td>
+          <td><span class="ball-sm red">✓</span><span class="ball-sm red">✓</span><span class="ball-sm red">✓</span><span class="ball-sm red">✓</span><span class="ball-sm red">✓</span><span class="ball-sm red">✓</span></td>
+          <td class="prize-float">浮动</td>
+        </tr>
+        <tr>
+          <td style="font-weight:600;">三等奖</td>
+          <td>红球中5 + 蓝球中1</td>
+          <td class="prize-fixed">3,000 元</td>
+        </tr>
+        <tr>
+          <td style="font-weight:600;">四等奖</td>
+          <td>红球中5 或 红球中4+蓝球中1</td>
+          <td class="prize-fixed">200 元</td>
+        </tr>
+        <tr>
+          <td style="font-weight:600;">五等奖</td>
+          <td>红球中4 或 红球中3+蓝球中1</td>
+          <td class="prize-fixed">10 元</td>
+        </tr>
+        <tr>
+          <td style="font-weight:600;">六等奖</td>
+          <td>蓝球中1（红球中2/1/0均可）</td>
+          <td class="prize-fixed">5 元</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>
 
 <div class="grid">
   <div class="card full">
@@ -691,6 +780,13 @@ window.addEventListener('resize', () => {
 });
 
 loadData(true);
+
+function toggleRules() {
+  const toggle = document.getElementById('rulesToggle');
+  const wrap = document.getElementById('rulesWrap');
+  toggle.classList.toggle('open');
+  wrap.classList.toggle('open');
+}
 </script>
 </body>
 </html>
