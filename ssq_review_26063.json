@@ -1,0 +1,105 @@
+{
+  "period": "26058",
+  "date": "2026-05-24",
+  "open_reds": [
+    1,
+    4,
+    7,
+    21,
+    29,
+    30
+  ],
+  "open_blue": 1,
+  "results": [
+    {
+      "plan": {
+        "name": "🔥 热号核心",
+        "reds": [
+          4,
+          9,
+          14,
+          24,
+          28,
+          30
+        ],
+        "blue": 15,
+        "type": "热号核心"
+      },
+      "prize": "七等奖(2+0)",
+      "red_hits": 2,
+      "blue_hit": false
+    },
+    {
+      "plan": {
+        "name": "🔗 热号+连号",
+        "reds": [
+          9,
+          10,
+          24,
+          29,
+          30,
+          33
+        ],
+        "blue": 2,
+        "type": "热号+连号"
+      },
+      "prize": "七等奖(2+0)",
+      "red_hits": 2,
+      "blue_hit": false
+    },
+    {
+      "plan": {
+        "name": "⚖️ 区间均衡",
+        "reds": [
+          1,
+          4,
+          15,
+          22,
+          25,
+          30
+        ],
+        "blue": 11,
+        "type": "区间均衡"
+      },
+      "prize": "六等奖",
+      "red_hits": 3,
+      "blue_hit": false
+    },
+    {
+      "plan": {
+        "name": "❄️ 冷门反弹",
+        "reds": [
+          7,
+          11,
+          18,
+          21,
+          26,
+          32
+        ],
+        "blue": 16,
+        "type": "冷门反弹"
+      },
+      "prize": "七等奖(2+0)",
+      "red_hits": 2,
+      "blue_hit": false
+    },
+    {
+      "plan": {
+        "name": "🎯 热号胆拖",
+        "reds": [
+          4,
+          9,
+          14,
+          16,
+          28,
+          30
+        ],
+        "blue": 7,
+        "type": "热号胆拖"
+      },
+      "prize": "七等奖(2+0)",
+      "red_hits": 2,
+      "blue_hit": false
+    }
+  ]
+}
