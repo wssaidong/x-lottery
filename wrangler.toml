@@ -1,0 +1,10 @@
+# Cloudflare Pages 部署配置
+
+# 项目名称
+name = "x-lottery"
+compatibility_date = "2024-01-01"
+
+# Pages 配置
+[pages]
+# 输出目录（dist/ 由本地 cp 生成）
+output_directory = "dist"
