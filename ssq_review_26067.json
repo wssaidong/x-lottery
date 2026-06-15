@@ -1,0 +1,43 @@
+{
+  "period": "26067",
+  "date": "2026-06-14",
+  "draw_time": "2026-06-14 21:15",
+  "draw_result": {
+    "reds": ["04", "19", "27", "29", "30", "32"],
+    "blue": "13"
+  },
+  "recommendation": {
+    "strategy": "B.冲四等奖方案",
+    "budget": "10元",
+    "plans": [
+      {"name": "B1.6热号集中", "reds": ["01", "02", "14", "24", "29", "30"], "blue": "02"},
+      {"name": "B2.6热号分散", "reds": ["04", "09", "22", "25", "28", "33"], "blue": "02"},
+      {"name": "B3.TOP4重号+连号", "reds": ["02", "24", "29", "30", "33", "09"], "blue": "07"},
+      {"name": "B4.零重号防极端", "reds": ["01", "22", "24", "28", "30", "14"], "blue": "15"},
+      {"name": "B5.冷号博4红", "reds": ["03", "06", "12", "17", "20", "25"], "blue": "01"}
+    ]
+  },
+  "results": [
+    {"name": "B1", "red_hits": 2, "hit_reds": ["24", "29"], "blue_hit": false, "prize": "0元", "level": "未中奖"},
+    {"name": "B2", "red_hits": 1, "hit_reds": ["04"], "blue_hit": false, "prize": "0元", "level": "未中奖"},
+    {"name": "B3", "red_hits": 3, "hit_reds": ["24", "29", "30"], "blue_hit": false, "prize": "0元", "level": "未中奖"},
+    {"name": "B4", "red_hits": 2, "hit_reds": ["24", "30"], "blue_hit": false, "prize": "0元", "level": "未中奖"},
+    {"name": "B5", "red_hits": 0, "hit_reds": [], "blue_hit": false, "prize": "0元", "level": "未中奖"}
+  ],
+  "summary": {
+    "total_spend": 10,
+    "total_earn": 0,
+    "net": -10,
+    "winning_notes": 0,
+    "total_red_hits": 8,
+    "blue_hit_rate": "0%",
+    "backtest_30p_roi": "-70%",
+    "actual_roi": "-100%"
+  },
+  "diagnosis": {
+    "red_strategy_effective": "B3 命中24/29/30三连号，红球热号策略部分有效",
+    "core_failure": "蓝球 02 30期最热但本期未出，3 注押 02 全挂",
+    "next_period_fix": "蓝球应分散到 4-5 个候选 (02/07/15/01/05)，不要多注押同一蓝"
+  },
+  "review_at": "2026-06-14 23:48 CST"
+}
