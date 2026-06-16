@@ -1,0 +1,46 @@
+{
+  "period": "26068",
+  "date": "2026-06-16",
+  "draw_time": "2026-06-16 21:15",
+  "draw_result": {
+    "reds": ["03", "05", "16", "18", "29", "32"],
+    "blue": "04"
+  },
+  "recommendation": {
+    "source_review": "ssq_review_26067.json (next_period fix 未生效: 5 注分散后 0 注押 04)",
+    "strategy": "B.冲四等奖方案",
+    "budget": "10元",
+    "plans": [
+      {"name": "B1.6热号集中", "reds": ["01", "02", "14", "24", "29", "30"], "blue": "02"},
+      {"name": "B2.6热号分散", "reds": ["04", "09", "22", "25", "28", "33"], "blue": "02"},
+      {"name": "B3.TOP4重号+连号", "reds": ["02", "24", "29", "30", "33", "09"], "blue": "07"},
+      {"name": "B4.零重号防极端", "reds": ["01", "22", "24", "28", "30", "14"], "blue": "15"},
+      {"name": "B5.冷号博4红", "reds": ["03", "06", "12", "17", "20", "25"], "blue": "01"}
+    ]
+  },
+  "results": [
+    {"name": "B1", "red_hits": 1, "hit_reds": ["29"], "blue_hit": false, "prize": "0元", "level": "未中奖"},
+    {"name": "B2", "red_hits": 0, "hit_reds": [], "blue_hit": false, "prize": "0元", "level": "未中奖"},
+    {"name": "B3", "red_hits": 1, "hit_reds": ["29"], "blue_hit": false, "prize": "0元", "level": "未中奖"},
+    {"name": "B4", "red_hits": 0, "hit_reds": [], "blue_hit": false, "prize": "0元", "level": "未中奖"},
+    {"name": "B5", "red_hits": 1, "hit_reds": ["03"], "blue_hit": false, "prize": "0元", "level": "未中奖"}
+  ],
+  "summary": {
+    "total_spend": 10,
+    "total_earn": 0,
+    "net": -10,
+    "winning_notes": 0,
+    "total_red_hits": 3,
+    "blue_hit_rate": "0%",
+    "red_hit_rate": "10% (3/30)",
+    "actual_roi": "-100%"
+  },
+  "diagnosis": {
+    "red_strategy_effective": "B1/B3/B5 各中 1 红(29/29/03), 红球热号策略部分有效但命中率偏低",
+    "core_failure": "26067 复盘建议把蓝分散到 4-5 个候选 (02/07/15/01/05), 实际分散后 0 注押中 04, 且 04 不在原 5 候选内",
+    "blue_distribution_check": "5 注蓝: 02/02/07/15/01 → 实际开出 04, 全部未中",
+    "streak_26066_26067_26068": "连续 3 期蓝球 0 命中(26066 蓝 16, 26067 蓝 13, 26068 蓝 04), 分散策略在 30 期窗口里高频号命中率被稀释"
+  },
+  "next_period_fix_26069": "蓝球候选覆盖 TOP6 (02/01/07/15/05/12) + 上一期未出的冷号 04/16/13/11; 红球维持热号集中 + 1 注零重号",
+  "review_at": "2026-06-16 23:35 CST"
+}
