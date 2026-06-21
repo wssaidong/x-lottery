@@ -587,6 +587,32 @@ def main():
     with open(plan_path, 'w', encoding='utf-8') as f:
         f.write(plan_text)
     log(f"\n  ✅ 方案存档: {plan_path}")
+
+    # 2026-06-20 修复：同步写入 ssq_latest_plans.json（复盘 cron 依赖此文件）
+    plans_for_hermes = {
+        'period': next_issue,
+        'date': next_period['date'],
+        'draw_time': f"{next_period['date']} 21:15",
+        'lottery': 'SSQ',
+        'generated_at': datetime.now().strftime('%Y-%m-%d %H:%M:%S CST'),
+        'strategy': 'V6 (热号+温号+冷号博4红+0重号+蓝球分散)',
+        'budget': '10元/期',
+        'last_draw': {
+            'issue': last_issue,
+            'reds': [f"{int(r):02d}" for r in history[0]['reds']],
+            'blue': f"{int(history[0]['blue']):02d}",
+            'date': history[0]['date'],
+        },
+        'plans': [
+            {'name': p['name'], 'reds': [f"{int(r):02d}" for r in p['reds']], 'blue': f"{int(p['blue']):02d}",
+             'note': p.get('note', '')}
+            for p in bets
+        ],
+    }
+    hermes_plans_path = Path('/Users/cai/.hermes/scripts/ssq_latest_plans.json')
+    with open(hermes_plans_path, 'w', encoding='utf-8') as f:
+        json.dump(plans_for_hermes, f, ensure_ascii=False, indent=2)
+    log(f"  ✅ 复盘文件: {hermes_plans_path}")
     
     # 4. 回测（如指定）
     if args.backtest:
