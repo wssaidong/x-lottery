@@ -1,0 +1,185 @@
+{
+  "period": "26067",
+  "date": "2026-06-17",
+  "draw_result": {
+    "front": [
+      6,
+      16,
+      18,
+      19,
+      28
+    ],
+    "back": [
+      7,
+      11
+    ]
+  },
+  "recommendation": {
+    "strategy": "V7 (mult-constraint)",
+    "budget": "10元",
+    "plans": [
+      {
+        "name": "A TOP6 主力",
+        "front": [
+          "12",
+          "15",
+          "17",
+          "32",
+          "33"
+        ],
+        "back": [
+          "05"
+        ]
+      },
+      {
+        "name": "B 4热+1温",
+        "front": [
+          "05",
+          "12",
+          "22",
+          "28",
+          "29"
+        ],
+        "back": [
+          "08"
+        ]
+      },
+      {
+        "name": "C 含1重号",
+        "front": [
+          "09",
+          "10",
+          "22",
+          "29",
+          "35"
+        ],
+        "back": [
+          "10"
+        ]
+      },
+      {
+        "name": "D 0重号防极端",
+        "front": [
+          "03",
+          "12",
+          "13",
+          "22",
+          "29"
+        ],
+        "back": [
+          "07"
+        ]
+      },
+      {
+        "name": "E 3热+2冷博反弹",
+        "front": [
+          "04",
+          "05",
+          "16",
+          "26",
+          "29"
+        ],
+        "back": [
+          "04"
+        ]
+      }
+    ]
+  },
+  "results": [
+    {
+      "name": "A TOP6 主力",
+      "front": [
+        12,
+        15,
+        17,
+        32,
+        33
+      ],
+      "back": 5,
+      "front_hits": 0,
+      "hit_front": [],
+      "back_hit": false,
+      "prize": 0,
+      "level": "未中"
+    },
+    {
+      "name": "B 4热+1温",
+      "front": [
+        5,
+        12,
+        22,
+        28,
+        29
+      ],
+      "back": 8,
+      "front_hits": 1,
+      "hit_front": [
+        28
+      ],
+      "back_hit": false,
+      "prize": 0,
+      "level": "未中"
+    },
+    {
+      "name": "C 含1重号",
+      "front": [
+        9,
+        10,
+        22,
+        29,
+        35
+      ],
+      "back": 10,
+      "front_hits": 0,
+      "hit_front": [],
+      "back_hit": false,
+      "prize": 0,
+      "level": "未中"
+    },
+    {
+      "name": "D 0重号防极端",
+      "front": [
+        3,
+        12,
+        13,
+        22,
+        29
+      ],
+      "back": 7,
+      "front_hits": 0,
+      "hit_front": [],
+      "back_hit": true,
+      "prize": 0,
+      "level": "未中"
+    },
+    {
+      "name": "E 3热+2冷博反弹",
+      "front": [
+        4,
+        5,
+        16,
+        26,
+        29
+      ],
+      "back": 4,
+      "front_hits": 1,
+      "hit_front": [
+        16
+      ],
+      "back_hit": false,
+      "prize": 0,
+      "level": "未中"
+    }
+  ],
+  "summary": {
+    "total_spend": 10,
+    "total_earn": 0,
+    "net": -10,
+    "actual_roi": "-100.0%",
+    "total_front_hits": 2,
+    "back_hit_count": 1,
+    "back_hit_rate": "20%",
+    "front_hit_rate": "8.0%"
+  },
+  "review_at": "2026-06-20 01:11:44 CST"
+}
