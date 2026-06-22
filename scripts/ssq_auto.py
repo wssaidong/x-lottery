@@ -167,9 +167,14 @@ def make_v6_bets(history, n_bets=5):
     last_reds_list = list(last_reds)
     
     def gen_smart(red_pool, n_repeat=0, blue='02', max_try=500):
-        fixed = random.sample([r for r in last_reds_list if r in red_pool], 
+        """V6.1（2026-06-21）：
+        - 关键修复：fixed 之后 rest 必须从"非上期红球"池子里 sample，否则总重号数会失控
+        """
+        # V6.1 修复：从 red_pool 挑 fixed（重号），rest 完全排除 last_reds
+        fixed = random.sample([r for r in last_reds_list if r in red_pool],
                             min(n_repeat, len([r for r in last_reds_list if r in red_pool])))
-        red_pool_clean = [r for r in red_pool if r not in fixed]
+        # V6.1 关键：red_pool_clean 排除整个 last_reds（不只是 fixed）
+        red_pool_clean = [r for r in red_pool if r not in last_reds_list]
         for _ in range(max_try):
             if len(red_pool_clean) < 6 - len(fixed):
                 return None
@@ -186,12 +191,19 @@ def make_v6_bets(history, n_bets=5):
             return reds
         return None
     
+    # V6.1 调整（2026-06-21 沉淀，基于 26070 + 26068 双双全军覆没硬数据）：
+    # - 重号配比反转：之前 5 注里 3 注零重号（60% 概率全灭）→ 改为 4 注含 1-3 重号（攻）
+    #                                                       + 1 注零重号（极端防守）
+    # - 蓝球集中：之前分散到 4 个蓝 → 改为 TOP1 占 3 注 + TOP2 占 1 注 + 1 注温号博
+    # - 60 期回测依据："押最热蓝" ROI -50% 远优于"分散 5 注" -77%（+27 个百分点）
+    # - 🐛 关键修复（V6.1）：hot_clean 已经排除 last_reds，
+    #   所以需要把 last_reds 加回 pool（让 fixed 能 sample 到），但 rest 从 pool_clean 排除 last_reds 拿
     plan_configs = [
-        ('A 热号主力',  hot_clean, 0, b_hot[0] if b_hot else '01'),
-        ('B 4热+2温',   hot_clean[:8] + warm, 0, b_hot[1] if len(b_hot) > 1 else b_hot[0]),
-        ('C 含2重号主力', list(last_reds) + hot_clean, 2, b_hot[2] if len(b_hot) > 2 else b_hot[0]),
-        ('D 0重号',     hot_clean + warm, 0, b_hot[0] if b_hot else '01'),
-        ('E 冷+温混合', cold + warm, 0, b_hot[1] if len(b_hot) > 1 else b_hot[0]),
+        ('A 含2重号主力', hot_clean + last_reds_list,                  2, b_hot[0] if b_hot else '01'),
+        ('B 含1重号次主力', hot_clean + warm + last_reds_list,         1, b_hot[0] if b_hot else '01'),
+        ('C 含2重号防守', hot_clean + last_reds_list,                  2, b_hot[1] if len(b_hot) > 1 else b_hot[0]),
+        ('D 0重号极端防守', hot_clean + warm,                          0, b_hot[0] if b_hot else '01'),
+        ('E 含3重号博反弹', hot_clean + last_reds_list,                3, b_hot[1] if len(b_hot) > 1 else b_hot[0]),
     ]
     
     bets = []

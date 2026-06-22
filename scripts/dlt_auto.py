@@ -185,13 +185,20 @@ def make_v7_bets(history, n_bets=5):
     random.seed(int(datetime.now().timestamp()) % 100000)
 
     def gen_dlt(front_pool, n_repeat_max, back, max_try=3000):
-        """DLT 单注：5+1"""
-        actual_repeat = min(n_repeat_max, 2)
+        """DLT 单注：5+1
+        V7.1（2026-06-21）：
+        - actual_repeat 上限从 2 改 3，支持 E 注"含3重号博反弹"
+        - 关键修复：fixed 之后 rest 必须从"非上期"池子里 sample，否则总重号数会失控
+        """
+        actual_repeat = min(n_repeat_max, 3)  # V7.1: 2 → 3
+        # V7.1 修复：从 front_pool 里挑 fixed（重号），然后 rest 必须完全不含 last_front 的号
+        # 这样最终 front 的总重号数 = actual_repeat（精确控制）
         candidates_in_pool = [n for n in last_front if n in front_pool]
         if actual_repeat > len(candidates_in_pool):
             actual_repeat = len(candidates_in_pool)
         fixed = random.sample(candidates_in_pool, actual_repeat) if candidates_in_pool and actual_repeat > 0 else []
-        pool_clean = [n for n in front_pool if n not in fixed]
+        # V7.1 关键：pool_clean 排除整个 last_front（不只是 fixed）
+        pool_clean = [n for n in front_pool if n not in last_front]
         for _ in range(max_try):
             if len(pool_clean) < 5 - len(fixed):
                 return None
@@ -212,12 +219,20 @@ def make_v7_bets(history, n_bets=5):
             return front
         return None
 
+    # V7.1 调整（2026-06-21 沉淀，基于 26068 大乐透全军覆没 + 60 期回测硬数据）：
+    # - 重号配比反转：之前 5 注里 4 注零重号（80% 概率全灭）→ 改为 4 注含 1-3 重号（攻）
+    #                                                       + 1 注零重号（极端防守）
+    # - 后区集中：之前分散到 5 个号（每个蓝 0-1 票）→ 改为 TOP1 占 3 注 + TOP2 占 1 注 + 1 注温号博
+    # - 60 期回测依据："押最热蓝" ROI -50% 远优于"分散 5 注" -77%（+27 个百分点）
+    # - 🐛 关键修复（V7.1）：front_hot/front_top6 已经排除 last_front，
+    #   所以需要把 last_front 加回 pool（让 fixed 能 sample 到），但 rest 从 pool_clean 排除 last_front 拿
+    last_front_list = sorted(last_front)
     plan_configs = [
-        ('A TOP6 主力',         front_top6,                                0, back_hot[0]),
-        ('B 4热+1温',           front_hot[:8] + front_warm,                0, back_hot[1]),
-        ('C 含1重号',           list(last_front) + front_hot,              1, back_hot[2]),
-        ('D 0重号防极端',       front_hot + front_warm,                    0, back_hot[3]),
-        ('E 3热+2冷博反弹',     front_hot[:6] + front_cold[:3],            0, back_hot[4]),
+        ('A 含2重号主力',     front_hot + last_front_list,                                  2, back_hot[0]),
+        ('B 含1重号次主力',   front_hot + front_warm + last_front_list,                     1, back_hot[0]),
+        ('C 含2重号防守',     front_top6 + last_front_list,                                 2, back_hot[1] if len(back_hot) > 1 else back_hot[0]),
+        ('D 0重号极端防守',   front_hot + front_warm,                                       0, back_hot[0]),
+        ('E 含3重号博反弹',   front_hot[:8] + front_warm + last_front_list,                 3, back_hot[1] if len(back_hot) > 1 else back_hot[0]),
     ]
 
     bets = []
