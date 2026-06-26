@@ -226,6 +226,83 @@ def make_v6_bets(history, n_bets=5):
     return bets, pool_summary, {'last_reds': sorted(last_reds), 'last_blue': last_blue}
 
 # ============== 复盘 ==============
+# ============== 自适应调参应用 ==============
+def _apply_tuning_to_ssq_bets(bets, tuning, history):
+    """
+    把 kill_set / must_set 应用到 V6 生成的 5 注上。
+    策略（保守版，避免破坏 V6 约束）：
+    1. kill_set.front: 在每注里把杀号换成候选红球（保持 6 个）
+    2. kill_set.back:  把杀蓝换成 b_hot 候选
+    3. must_set.front: 至少 1 注必须包含必选红号（替换最远端 1 个）
+    4. must_set.back:  至少 1 注用必选蓝（替换）
+    """
+    import random as _r
+    _r.seed(int(datetime.now().timestamp()) % 100000)
+
+    # 1. 候选红球池（基于频次 + 遗漏，排除 kill_set）
+    cnt_r = get_freq(history, 30)
+    kill_f = set(str(x).zfill(2) for x in tuning["kill_set"].get("front", []))
+    candidate_reds = [str(n).zfill(2) for n, _ in cnt_r.most_common(20)
+                      if str(n).zfill(2) not in kill_f]
+    if len(candidate_reds) < 10:
+        candidate_reds += [f"{i:02d}" for i in range(1, 34) if f"{i:02d}" not in kill_f]
+
+    # 蓝球候选（排除 kill_set.back）
+    kill_b = set(str(x).zfill(2) for x in tuning["kill_set"].get("back", []))
+    b_candidates = [f"{i:02d}" for i in range(1, 17) if f"{i:02d}" not in kill_b]
+
+    # 必选号
+    must_f = [str(x).zfill(2) for x in tuning["must_set"].get("front", [])]
+    must_b = [str(x).zfill(2) for x in tuning["must_set"].get("back", [])]
+
+    adjusted = []
+    must_f_used = False
+    must_b_used = False
+
+    for i, bet in enumerate(bets):
+        reds = [str(r).zfill(2) for r in bet["reds"]]
+        blue = str(bet["blue"]).zfill(2)
+
+        # ① 杀号替换（保持 6 个红球）
+        new_reds = [r for r in reds if r not in kill_f]
+        while len(new_reds) < 6:
+            extra = _r.choice(candidate_reds)
+            if extra not in new_reds:
+                new_reds.append(extra)
+        new_reds = sorted(new_reds[:6])
+
+        # ② 蓝球替换（如果在杀号里）
+        if blue in kill_b:
+            new_blue = _r.choice(b_candidates) if b_candidates else "01"
+        else:
+            new_blue = blue
+
+        # ③ must_set.front：第一注（i==0）必须包含必选红号
+        if i == 0 and must_f and not must_f_used:
+            for mf in must_f:
+                if mf not in new_reds:
+                    new_reds[-1] = mf  # 替换最后一个（破坏约束最小）
+                    new_reds = sorted(new_reds)
+            must_f_used = True
+
+        # ④ must_set.back：第一注必须用必选蓝
+        if i == 0 and must_b and not must_b_used and new_blue not in must_b:
+            new_blue = _r.choice(must_b)
+            must_b_used = True
+
+        adjusted.append({
+            **bet,
+            "reds": new_reds,
+            "blue": new_blue,
+            "red_str": ', '.join(new_reds),
+            "bet_str": f"{' '.join(new_reds)} + {new_blue}",
+            "tuning_applied": True,
+        })
+
+    return adjusted, {"kill_f": list(kill_f), "kill_b": list(kill_b),
+                     "must_f": must_f, "must_b": must_b}
+
+
 def review_period(period, recommendations, actual_draw):
     """复盘某一期"""
     win_set = set(actual_draw['reds'])
@@ -564,6 +641,25 @@ def main():
     # 3. 出下期方案
     log(f"\n[3/4] 生成下期方案...")
     bets, pool_summary, ctx = make_v6_bets(history, n_bets=5)
+
+    # 3.5 应用自适应调参（从复盘 cron 写入的 feedback 计算）
+    try:
+        sys.path.insert(0, str(Path.home() / '.hermes' / 'scripts'))
+        from lottery_strategy_adjuster import load_tuning, save_tuning
+        # 如果 tuning.json 不存在但 feedback 有数据，先重算一次
+        from pathlib import Path as _P
+        if not _P(Path.home() / '.hermes' / 'scripts' / 'ssq_tuning.json').exists():
+            save_tuning("SSQ")
+        tuning = load_tuning("SSQ")
+        if tuning["n_records"] >= 3:  # 至少 3 期反馈才应用
+            log(f"  🧠 自适应调参生效：{tuning['n_records']} 期反馈")
+            log(f"     杀号={tuning['kill_set']} 必选={tuning['must_set']}")
+            bets, _adjusted = _apply_tuning_to_ssq_bets(bets, tuning, history)
+            log(f"     应用到 {len(bets)} 注（kill_set 替换 / must_set 注入）")
+        else:
+            log(f"  🧠 自适应调参跳过（仅 {tuning['n_records']} 期反馈，需 ≥3 期）")
+    except Exception as e:
+        log(f"  ⚠️ 调参加载失败：{e}")
     
     next_issue = args.next or str(int(last_issue) + 1).zfill(5)
     next_date = predict_next_issue(history) or {'date': 'TBD', 'weekday': '?'}

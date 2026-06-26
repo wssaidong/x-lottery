@@ -272,6 +272,86 @@ def make_v7_bets(history, n_bets=5):
 
 
 # ============== 复盘 ==============
+# ============== 自适应调参应用 ==============
+def _apply_tuning_to_dlt_bets(bets, tuning, history):
+    """
+    把 kill_set / must_set 应用到 V7 生成的 5 注上（前区 5 个 + 后区 2 个）。
+    策略：杀掉 → 替换候选；必选 → 第一注强制包含。
+    """
+    import random as _r
+    _r.seed(int(datetime.now().timestamp()) % 100000)
+
+    # 候选前区池（基于频次 + 遗漏，排除 kill_set）
+    cnt_f = get_freq(history, 30)
+    kill_f = set(str(x).zfill(2) for x in tuning["kill_set"].get("front", []))
+    candidate_front = [f"{n:02d}" for n, _ in cnt_f.most_common(20)
+                       if f"{n:02d}" not in kill_f]
+    if len(candidate_front) < 10:
+        candidate_front += [f"{i:02d}" for i in range(1, 36) if f"{i:02d}" not in kill_f]
+
+    # 后区候选（排除 kill_set.back）
+    kill_b = set(str(x).zfill(2) for x in tuning["kill_set"].get("back", []))
+    b_candidates = [f"{i:02d}" for i in range(1, 13) if f"{i:02d}" not in kill_b]
+
+    # 必选
+    must_f = [str(x).zfill(2) for x in tuning["must_set"].get("front", [])]
+    must_b = [str(x).zfill(2) for x in tuning["must_set"].get("back", [])]
+
+    adjusted = []
+    must_f_used = False
+    must_b_used = False
+
+    for i, bet in enumerate(bets):
+        fronts = [f"{n:02d}" for n in bet["front"]]
+        backs_raw = bet.get("back_str", "01")
+        backs = backs_raw.split() if isinstance(backs_raw, str) else [str(backs_raw)]
+        backs = [b.zfill(2) for b in backs]
+
+        # ① 杀前区
+        new_fronts = [f for f in fronts if f not in kill_f]
+        while len(new_fronts) < 5:
+            extra = _r.choice(candidate_front)
+            if extra not in new_fronts:
+                new_fronts.append(extra)
+        new_fronts = sorted(new_fronts[:5])
+
+        # ② 杀后区
+        new_backs = [b for b in backs if b not in kill_b]
+        while len(new_backs) < 2:
+            extra = _r.choice(b_candidates) if b_candidates else "01"
+            if extra not in new_backs:
+                new_backs.append(extra)
+        new_backs = sorted(new_backs[:2])
+
+        # ③ must_set.front：第一注必须包含必选前区
+        if i == 0 and must_f and not must_f_used:
+            for mf in must_f:
+                if mf not in new_fronts:
+                    new_fronts[-1] = mf
+                    new_fronts = sorted(new_fronts)
+            must_f_used = True
+
+        # ④ must_set.back：第一注必须包含必选后区
+        if i == 0 and must_b and not must_b_used:
+            for mb in must_b:
+                if mb not in new_backs:
+                    new_backs[-1] = mb
+                    new_backs = sorted(new_backs)
+            must_b_used = True
+
+        adjusted.append({
+            **bet,
+            "front": [int(f) for f in new_fronts],
+            "back_str": ' '.join(new_backs),
+            "back": new_backs,
+            "bet_str": f"{' '.join(new_fronts)} + {' '.join(new_backs)}",
+            "tuning_applied": True,
+        })
+
+    return adjusted, {"kill_f": list(kill_f), "kill_b": list(kill_b),
+                     "must_f": must_f, "must_b": must_b}
+
+
 def review_period(period, recommendations, actual_draw):
     """复盘某一期"""
     win_front = set(actual_draw['front'])
@@ -582,6 +662,24 @@ def main():
     # 3. 出下期方案
     log(f"\n[3/4] 生成下期方案...")
     bets, pool_summary, ctx = make_v7_bets(history, n_bets=5)
+
+    # 3.5 应用自适应调参（从复盘 cron 写入的 feedback 计算）
+    try:
+        sys.path.insert(0, str(Path.home() / '.hermes' / 'scripts'))
+        from lottery_strategy_adjuster import load_tuning, save_tuning
+        from pathlib import Path as _P
+        if not _P(Path.home() / '.hermes' / 'scripts' / 'dlt_tuning.json').exists():
+            save_tuning("DLT")
+        tuning = load_tuning("DLT")
+        if tuning["n_records"] >= 3:
+            log(f"  🧠 自适应调参生效：{tuning['n_records']} 期反馈")
+            log(f"     杀号={tuning['kill_set']} 必选={tuning['must_set']}")
+            bets, _adjusted = _apply_tuning_to_dlt_bets(bets, tuning, history)
+            log(f"     应用到 {len(bets)} 注（kill_set 替换 / must_set 注入）")
+        else:
+            log(f"  🧠 自适应调参跳过（仅 {tuning['n_records']} 期反馈，需 ≥3 期）")
+    except Exception as e:
+        log(f"  ⚠️ 调参加载失败：{e}")
 
     next_issue = args.next or str(int(last_issue) + 1).zfill(5)
     next_date = predict_next_issue(history) or {'date': 'TBD', 'weekday': '?'}
