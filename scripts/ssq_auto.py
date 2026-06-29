@@ -198,12 +198,18 @@ def make_v6_bets(history, n_bets=5):
     # - 60 期回测依据："押最热蓝" ROI -50% 远优于"分散 5 注" -77%（+27 个百分点）
     # - 🐛 关键修复（V6.1）：hot_clean 已经排除 last_reds，
     #   所以需要把 last_reds 加回 pool（让 fixed 能 sample 到），但 rest 从 pool_clean 排除 last_reds 拿
+    # V6.2 用户偏好（2026-06-28）：篮球全部选第二热的（TOP2）
+    # - 之前 V6.1: TOP1×3 + TOP2×2（押最热蓝，60 期回测 ROI -50% 优于分散 -77%）
+    # - 现在: TOP2×5（押第二热蓝）
+    # - ⚠️ 风险：连续翻车概率更高（TOP2 命中率 < TOP1）
+    # - Fallback: b_hot 不足 2 个时退回 b_hot[0]（保底不空）
+    _blue_t2 = b_hot[1] if len(b_hot) > 1 else (b_hot[0] if b_hot else '01')
     plan_configs = [
-        ('A 含2重号主力', hot_clean + last_reds_list,                  2, b_hot[0] if b_hot else '01'),
-        ('B 含1重号次主力', hot_clean + warm + last_reds_list,         1, b_hot[0] if b_hot else '01'),
-        ('C 含2重号防守', hot_clean + last_reds_list,                  2, b_hot[1] if len(b_hot) > 1 else b_hot[0]),
-        ('D 0重号极端防守', hot_clean + warm,                          0, b_hot[0] if b_hot else '01'),
-        ('E 含3重号博反弹', hot_clean + last_reds_list,                3, b_hot[1] if len(b_hot) > 1 else b_hot[0]),
+        ('A 含2重号主力', hot_clean + last_reds_list,                  2, _blue_t2),
+        ('B 含1重号次主力', hot_clean + warm + last_reds_list,         1, _blue_t2),
+        ('C 含2重号防守', hot_clean + last_reds_list,                  2, _blue_t2),
+        ('D 0重号极端防守', hot_clean + warm,                          0, _blue_t2),
+        ('E 含3重号博反弹', hot_clean + last_reds_list,                3, _blue_t2),
     ]
     
     bets = []
@@ -247,9 +253,24 @@ def _apply_tuning_to_ssq_bets(bets, tuning, history):
     if len(candidate_reds) < 10:
         candidate_reds += [f"{i:02d}" for i in range(1, 34) if f"{i:02d}" not in kill_f]
 
-    # 蓝球候选（排除 kill_set.back）
+    # 蓝球候选（V6.2：按 TOP2 优先级，押 TOP2）
+    # - 优先 b_hot[1]（第二热），其次 b_hot[0]（最热），最后 1-16 随机
+    # - 独立从 history 算 b_hot，不依赖外部 pool_summary（调参函数没传）
     kill_b = set(str(x).zfill(2) for x in tuning["kill_set"].get("back", []))
-    b_candidates = [f"{i:02d}" for i in range(1, 17) if f"{i:02d}" not in kill_b]
+    cnt_b = get_freq(history, 30, is_blue=True)
+    last_b = bets[0]["blue"] if bets else None  # 用原推荐里的蓝作为近似 last_blue
+    _b_hot_now = [b for b, _ in cnt_b.most_common() if b != last_b][:3]
+    _b_t2 = _b_hot_now[1] if len(_b_hot_now) > 1 else (_b_hot_now[0] if _b_hot_now else None)
+    _b_t1 = _b_hot_now[0] if _b_hot_now else None
+    # 优先级列表：[TOP2, TOP1, ...1-16 随机去重]
+    b_candidates = []
+    for _cand in [_b_t2, _b_t1]:
+        if _cand and str(_cand).zfill(2) not in kill_b:
+            b_candidates.append(str(_cand).zfill(2))
+    b_candidates += [f"{i:02d}" for i in range(1, 17) if f"{i:02d}" not in kill_b]
+    # 去重保持顺序
+    seen = set()
+    b_candidates = [c for c in b_candidates if not (c in seen or seen.add(c))]
 
     # 必选号
     must_f = [str(x).zfill(2) for x in tuning["must_set"].get("front", [])]
