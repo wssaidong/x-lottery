@@ -1,0 +1,33 @@
+{
+  "period": "26090",
+  "date": "2026-08-06",
+  "draw_result": {
+    "reds": ["02", "04", "15", "23", "25", "27"],
+    "blue": "03"
+  },
+  "recommendation": {
+    "strategy": "V6 (mult-constraint)",
+    "budget": "10元",
+    "plans": [
+      {"name": "A 含2重号主力", "reds": ["07","08","09","15","19","30"], "blue": "09"},
+      {"name": "B 含1重号次主力", "reds": ["09","14","16","23","28","29"], "blue": "04"},
+      {"name": "C 含2重号防守", "reds": ["02","08","09","23","27","28"], "blue": "04"},
+      {"name": "D 0重号极端防守", "reds": ["08","16","19","21","28","29"], "blue": "04"},
+      {"name": "E 含3重号博反弹", "reds": ["08","09","14","18","24","27"], "blue": "04"}
+    ]
+  },
+  "review": [
+    {"plan": "A 含2重号主力", "red_hits": 1, "blue_hit": false, "tier": "未中", "hit_reds": ["15"]},
+    {"plan": "B 含1重号次主力", "red_hits": 1, "blue_hit": false, "tier": "未中", "hit_reds": ["23"]},
+    {"plan": "C 含2重号防守", "red_hits": 3, "blue_hit": false, "tier": "未中", "hit_reds": ["02","23","27"]},
+    {"plan": "D 0重号极端防守", "red_hits": 0, "blue_hit": false, "tier": "未中", "hit_reds": []},
+    {"plan": "E 含3重号博反弹", "red_hits": 1, "blue_hit": false, "tier": "未中", "hit_reds": ["27"]}
+  ],
+  "summary": {
+    "total_plans": 5,
+    "winning_plans": 0,
+    "best_hit": "C 含2重号防守 红3蓝0 (未中)",
+    "blue_analysis": "全 5 注杀蓝 03(上期刚出)，实际开奖正是 03 — 杀蓝策略彻底失败",
+    "key_lesson": "上期刚出的蓝球杀号策略失效。30 期中连续两期同蓝虽然 <10% 但 26090 命中。蓝球不应作为强杀信号，应保留 1-2 注主押上期蓝"
+  }
+}
