@@ -1,0 +1,142 @@
+{
+  "period": "26092",
+  "date": "2026-08-15",
+  "draw_result": {
+    "front": [
+      "12",
+      "16",
+      "19",
+      "29",
+      "33"
+    ],
+    "back": [
+      "07",
+      "09"
+    ]
+  },
+  "recommendation": {
+    "strategy": "V7",
+    "budget": "10元",
+    "plans": [
+      {
+        "name": "A 含2重号主力",
+        "front": [
+          "04",
+          "07",
+          "15",
+          "23",
+          "24"
+        ],
+        "back": [
+          "01",
+          "04"
+        ]
+      },
+      {
+        "name": "B 含1重号次主力",
+        "front": [
+          "03",
+          "14",
+          "24",
+          "25",
+          "28"
+        ],
+        "back": [
+          "05",
+          "12"
+        ]
+      },
+      {
+        "name": "C 含2重号防守",
+        "front": [
+          "04",
+          "07",
+          "10",
+          "26",
+          "27"
+        ],
+        "back": [
+          "11",
+          "12"
+        ]
+      },
+      {
+        "name": "D 0重号极端防守",
+        "front": [
+          "10",
+          "15",
+          "16",
+          "23",
+          "25"
+        ],
+        "back": [
+          "05",
+          "08"
+        ]
+      },
+      {
+        "name": "E 含3重号博反弹",
+        "front": [
+          "03",
+          "04",
+          "18",
+          "23",
+          "32"
+        ],
+        "back": [
+          "11",
+          "12"
+        ]
+      }
+    ]
+  },
+  "review": [
+    {
+      "plan": "A 含2重号主力",
+      "front_hits": 0,
+      "back_hits": 0,
+      "tier": "未中",
+      "hit_front": [],
+      "hit_back": []
+    },
+    {
+      "plan": "B 含1重号次主力",
+      "front_hits": 0,
+      "back_hits": 0,
+      "tier": "未中",
+      "hit_front": [],
+      "hit_back": []
+    },
+    {
+      "plan": "C 含2重号防守",
+      "front_hits": 0,
+      "back_hits": 0,
+      "tier": "未中",
+      "hit_front": [],
+      "hit_back": []
+    },
+    {
+      "plan": "D 0重号极端防守",
+      "front_hits": 1,
+      "back_hits": 0,
+      "tier": "未中",
+      "hit_front": [
+        "16"
+      ],
+      "hit_back": []
+    },
+    {
+      "plan": "E 含3重号博反弹",
+      "front_hits": 0,
+      "back_hits": 0,
+      "tier": "未中",
+      "hit_front": [],
+      "hit_back": []
+    }
+  ],
+  "summary": {
+    "total_plans": 5,
+    "winning_plans": 0,
+    "best_hit": "D 0重号极端防守"
+  }
+}
