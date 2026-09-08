@@ -1,0 +1,63 @@
+{
+  "n_periods": 15,
+  "base_seed": 42,
+  "results": {
+    "V6": {
+      "cost": 150,
+      "prize": 0,
+      "net": -150,
+      "roi_pct": -100.0,
+      "hit_rate_pct": 0.0,
+      "blue_hit_rate_pct": 0.0,
+      "red_hit_dist": {
+        "1": 28,
+        "0": 22,
+        "2": 21,
+        "3": 4
+      }
+    },
+    "V7": {
+      "cost": 150,
+      "prize": 45,
+      "net": -105,
+      "roi_pct": -70.0,
+      "hit_rate_pct": 9.3,
+      "blue_hit_rate_pct": 8.0,
+      "red_hit_dist": {
+        "0": 22,
+        "1": 28,
+        "2": 14,
+        "3": 10,
+        "4": 1
+      }
+    },
+    "纯随机": {
+      "cost": 150,
+      "prize": 45,
+      "net": -105,
+      "roi_pct": -70.0,
+      "hit_rate_pct": 12.0,
+      "blue_hit_rate_pct": 12.0,
+      "red_hit_dist": {
+        "0": 30,
+        "1": 29,
+        "2": 15,
+        "3": 1
+      }
+    },
+    "押最热1注": {
+      "cost": 30,
+      "prize": 10,
+      "net": -20,
+      "roi_pct": -66.7,
+      "hit_rate_pct": 13.3,
+      "blue_hit_rate_pct": 13.3,
+      "red_hit_dist": {
+        "1": 8,
+        "2": 4,
+        "0": 2,
+        "3": 1
+      }
+    }
+  }
+}
